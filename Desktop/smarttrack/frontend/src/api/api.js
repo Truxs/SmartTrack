@@ -19,6 +19,7 @@ API.interceptors.request.use((config) => {
 
 /* ---------- Auth ---------- */
 export const login = (credentials) => API.post('/auth/login', credentials);
+export const register = (credentials) => API.post('/auth/register', credentials);
 
 /* ---------- Products ---------- */
 export const getProducts      = ()           => API.get('/products');

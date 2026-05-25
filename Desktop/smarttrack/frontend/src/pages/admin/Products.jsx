@@ -2,7 +2,35 @@ import { useState, useEffect } from 'react';
 import { getProducts, getStock, createProduct, updateProduct, deleteProduct, createBatch, updateBatch, deleteBatch } from '../../api/api';
 import Modal from '../../components/ui/Modal';
 import InputField from '../../components/ui/InputField';
-import { Plus, Trash2, Edit3, Package, Eye, ImageIcon, X } from 'lucide-react';
+import { Plus, Trash2, Edit3, Package, Eye, X, PackagePlus } from 'lucide-react';
+
+/* Map product name/category → real Unsplash photo */
+const getProductImage = (name = '', category = '') => {
+    const n = name.toLowerCase();
+    const c = category.toLowerCase();
+    if (n.includes('tuna') || n.includes('sardine'))  return 'https://images.unsplash.com/photo-1608685581781-a3b0e07dd224?auto=format&fit=crop&w=400&q=80';
+    if (n.includes('cheese'))                         return 'https://images.unsplash.com/photo-1486297678162-eb2a19b0a32d?auto=format&fit=crop&w=400&q=80';
+    if (n.includes('chicken'))                        return 'https://images.unsplash.com/photo-1604503468506-a8da13d11bea?auto=format&fit=crop&w=400&q=80';
+    if (n.includes('coca') || n.includes('cola'))     return 'https://images.unsplash.com/photo-1554866585-cd94860890b7?auto=format&fit=crop&w=400&q=80';
+    if (n.includes('egg'))                            return 'https://images.unsplash.com/photo-1582722872445-44dc5f7e3c8f?auto=format&fit=crop&w=400&q=80';
+    if (n.includes('juice') || n.includes('orange'))  return 'https://images.unsplash.com/photo-1621506289937-a8e4df240d0b?auto=format&fit=crop&w=400&q=80';
+    if (n.includes('chip') || n.includes('snack'))    return 'https://images.unsplash.com/photo-1566478989037-eec170784d0b?auto=format&fit=crop&w=400&q=80';
+    if (n.includes('bread'))                          return 'https://images.unsplash.com/photo-1509440159596-0249088772ff?auto=format&fit=crop&w=400&q=80';
+    if (n.includes('milk'))                           return 'https://images.unsplash.com/photo-1563636619-e9143da7973b?auto=format&fit=crop&w=400&q=80';
+    if (n.includes('yogurt') || n.includes('yoghurt'))return 'https://images.unsplash.com/photo-1488477181946-6428a0291777?auto=format&fit=crop&w=400&q=80';
+    if (n.includes('rice'))                           return 'https://images.unsplash.com/photo-1536304929831-ee1ca9d44906?auto=format&fit=crop&w=400&q=80';
+    if (n.includes('water'))                          return 'https://images.unsplash.com/photo-1548839140-29a749e1cf4d?auto=format&fit=crop&w=400&q=80';
+    if (n.includes('coffee'))                         return 'https://images.unsplash.com/photo-1447933601403-0c6688de566e?auto=format&fit=crop&w=400&q=80';
+    if (n.includes('chocolate'))                      return 'https://images.unsplash.com/photo-1481391243133-f96216dcb5d2?auto=format&fit=crop&w=400&q=80';
+    if (n.includes('butter'))                         return 'https://images.unsplash.com/photo-1589985270826-4b7bb135bc9d?auto=format&fit=crop&w=400&q=80';
+    if (c.includes('dairy'))                          return 'https://images.unsplash.com/photo-1563636619-e9143da7973b?auto=format&fit=crop&w=400&q=80';
+    if (c.includes('meat'))                           return 'https://images.unsplash.com/photo-1604503468506-a8da13d11bea?auto=format&fit=crop&w=400&q=80';
+    if (c.includes('beverage') || c.includes('drink'))return 'https://images.unsplash.com/photo-1554866585-cd94860890b7?auto=format&fit=crop&w=400&q=80';
+    if (c.includes('bakery'))                         return 'https://images.unsplash.com/photo-1509440159596-0249088772ff?auto=format&fit=crop&w=400&q=80';
+    if (c.includes('snack'))                          return 'https://images.unsplash.com/photo-1566478989037-eec170784d0b?auto=format&fit=crop&w=400&q=80';
+    if (c.includes('canned'))                         return 'https://images.unsplash.com/photo-1608685581781-a3b0e07dd224?auto=format&fit=crop&w=400&q=80';
+    return 'https://images.unsplash.com/photo-1542838132-92c53300491e?auto=format&fit=crop&w=400&q=80';
+};
 
 const Products = () => {
     const [products, setProducts] = useState([]);
@@ -15,6 +43,7 @@ const Products = () => {
     const [selectedCategory, setSelectedCategory] = useState('All');
     const [searchTerm, setSearchTerm] = useState('');
     const [viewProduct, setViewProduct] = useState(null);
+    const [preselectedProduct, setPreselectedProduct] = useState(null);
 
     const emptyProduct = { barcode: '', name: '', category: '', price: '', reorder_level: 10 };
     const emptyBatch = { product_id: '', quantity: '', expiry_date: '' };
@@ -82,10 +111,19 @@ const Products = () => {
         setBForm({ product_id: b.product_id, quantity: b.quantity, expiry_date: b.expiry_date });
     };
 
+    // Open Add Stock modal pre-filled with a specific product
+    const openAddStockForProduct = (product) => {
+        setEditingBatch(null);
+        setBForm({ product_id: product.id, quantity: '', expiry_date: '' });
+        setPreselectedProduct(product);
+        setShowBatch(true);
+    };
+
     const closeBatchModal = () => {
         setShowBatch(false);
         setEditingBatch(null);
         setBForm(emptyBatch);
+        setPreselectedProduct(null);
     };
 
     /* ---- Helpers ---- */
@@ -125,14 +163,14 @@ const Products = () => {
                 </div>
                 <div style={{ display: 'flex', gap: '10px' }}>
                     {tab === 'products' && <ActionBtn onClick={() => setShowProduct(true)} label="Add Product" />}
-                    {tab === 'batches' && <ActionBtn onClick={() => setShowBatch(true)} label="Add Batch" />}
+                    {tab === 'batches' && <ActionBtn onClick={() => { setPreselectedProduct(null); setBForm(emptyBatch); setShowBatch(true); }} label="Add Stock" icon={<PackagePlus size={16} />} />}
                 </div>
             </div>
 
             {/* Tabs */}
             <div style={{ display: 'flex', borderBottom: '2px solid var(--border)' }}>
                 <TabBtn active={tab === 'products'} onClick={() => setTab('products')} label="Products" count={products.length} />
-                <TabBtn active={tab === 'batches'} onClick={() => setTab('batches')} label="Batches" count={stock.length} />
+                <TabBtn active={tab === 'batches'} onClick={() => setTab('batches')} label="Stock Batches" count={stock.length} />
             </div>
 
             {/* ======== PRODUCTS TAB ======== */}
@@ -162,22 +200,14 @@ const Products = () => {
                                     border: '1px solid var(--border)', overflow: 'hidden',
                                     transition: 'all 0.2s ease', cursor: 'default'
                                 }}>
-                                    {/*
-                                        ===== PRODUCT IMAGE =====
-                                        Replace the placeholder below with an <img> tag:
-                                        <img src={p.image_url || '/placeholder.png'} alt={p.name}
-                                             style={{ width:'100%', height:'160px', objectFit:'cover' }} />
-                                        Or use a dynamic backend path:
-                                        src={`http://localhost:5000/uploads/${p.image}`}
-                                        ==========================
-                                    */}
-                                    <div style={{
-                                        width: '100%', height: '160px', background: 'var(--bg-input)',
-                                        display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center',
-                                        borderBottom: '1px solid var(--border-light)', color: '#cbd5e1'
-                                    }}>
-                                        <ImageIcon size={36} strokeWidth={1.5} />
-                                        <span style={{ fontSize: '11px', marginTop: '6px' }}>No image</span>
+                                    {/* Real product image */}
+                                    <div style={{ width: '100%', height: '160px', overflow: 'hidden', position: 'relative' }}>
+                                        <img
+                                            src={getProductImage(p.name, p.category)}
+                                            alt={p.name}
+                                            style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }}
+                                            onError={e => { e.target.style.display = 'none'; }}
+                                        />
                                     </div>
 
                                     <div style={{ padding: '14px 16px' }}>
@@ -187,7 +217,23 @@ const Products = () => {
                                             <span style={{ fontSize: '18px', fontWeight: 700, color: 'var(--text-primary)', letterSpacing: '-0.02em' }}>₱{parseFloat(p.price).toFixed(2)}</span>
                                             <span style={{ fontSize: '11px', fontWeight: 600, color: s.c, background: s.bg, padding: '3px 10px', borderRadius: 'var(--radius-full)' }}>{s.l}</span>
                                         </div>
-                                        <div style={{ display: 'flex', alignItems: 'center', gap: '6px', borderTop: '1px solid var(--border-light)', paddingTop: '12px' }}>
+                                        {/* Add Stock quick button */}
+                                        <button
+                                            onClick={() => openAddStockForProduct(p)}
+                                            style={{
+                                                width: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center',
+                                                gap: '6px', padding: '8px', borderRadius: '8px', border: '1px solid var(--primary)',
+                                                background: 'var(--primary-bg)', color: 'var(--primary)', cursor: 'pointer',
+                                                fontSize: '12px', fontWeight: 600, fontFamily: 'inherit', marginBottom: '8px',
+                                                transition: 'all 0.15s ease'
+                                            }}
+                                            onMouseEnter={e => { e.currentTarget.style.background = 'var(--primary)'; e.currentTarget.style.color = 'white'; }}
+                                            onMouseLeave={e => { e.currentTarget.style.background = 'var(--primary-bg)'; e.currentTarget.style.color = 'var(--primary)'; }}
+                                            title="Add Stock"
+                                        >
+                                            <PackagePlus size={13} /> Add Stock
+                                        </button>
+                                        <div style={{ display: 'flex', alignItems: 'center', gap: '6px', borderTop: '1px solid var(--border-light)', paddingTop: '10px' }}>
                                             <span style={{ fontSize: '11px', color: 'var(--text-muted)', fontFamily: 'monospace', background: 'var(--bg-input)', padding: '3px 8px', borderRadius: '4px', flex: 1 }}>{p.barcode}</span>
                                             <button onClick={() => setViewProduct(p)} style={iconBtn} title="View Details"><Eye size={14} /></button>
                                             <button onClick={() => openEditProduct(p)} style={iconBtn} title="Edit"><Edit3 size={14} /></button>
@@ -273,16 +319,32 @@ const Products = () => {
                             <DetailItem label="Reorder Level" value={viewProduct.reorder_level} />
                             <DetailItem label="Status" value={stockStatus(viewProduct).l} />
                         </div>
+                        {/* Add Stock from detail modal */}
+                        <button
+                            onClick={() => { setViewProduct(null); openAddStockForProduct(viewProduct); }}
+                            style={{
+                                width: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center',
+                                gap: '8px', padding: '11px', borderRadius: '10px', border: 'none',
+                                background: 'var(--primary)', color: 'white', cursor: 'pointer',
+                                fontSize: '13px', fontWeight: 600, fontFamily: 'inherit'
+                            }}
+                        >
+                            <PackagePlus size={15} /> Add Stock for this Product
+                        </button>
+
                         {productBatches.length > 0 && (
                             <div>
                                 <p style={{ fontSize: '13px', fontWeight: 600, color: 'var(--text-primary)', marginBottom: '8px' }}>Active Batches</p>
                                 {productBatches.map(b => (
-                                    <div key={b.id} style={{ display: 'flex', justifyContent: 'space-between', padding: '8px 0', borderBottom: '1px solid var(--border-light)', fontSize: '13px' }}>
+                                    <div key={b.id} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '8px 0', borderBottom: '1px solid var(--border-light)', fontSize: '13px' }}>
                                         <span style={{ color: 'var(--text-secondary)' }}>Qty: {b.quantity}</span>
                                         <span style={{ color: 'var(--text-muted)' }}>Exp: {b.expiry_date}</span>
                                     </div>
                                 ))}
                             </div>
+                        )}
+                        {productBatches.length === 0 && (
+                            <p style={{ textAlign: 'center', color: 'var(--text-muted)', fontSize: '13px', padding: '12px 0' }}>No stock batches yet.</p>
                         )}
                     </div>
                 </Modal>
@@ -318,25 +380,59 @@ const Products = () => {
                 </Modal>
             )}
 
-            {/* ======== ADD/EDIT BATCH MODAL ======== */}
+            {/* ======== ADD/EDIT BATCH (STOCK) MODAL ======== */}
             {(showBatch || editingBatch) && (
-                <Modal title={editingBatch ? 'Edit Batch' : 'Add Batch'} onClose={closeBatchModal}>
+                <Modal
+                    title={editingBatch ? 'Edit Stock Batch' : (preselectedProduct ? `Add Stock — ${preselectedProduct.name}` : 'Add Stock')}
+                    onClose={closeBatchModal}
+                >
                     <form onSubmit={handleBatchSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+
+                        {/* Show pre-selected product info OR a selector */}
                         {!editingBatch && (
-                            <div>
-                                <label style={{ display: 'block', fontSize: '13px', fontWeight: 500, color: 'var(--text-secondary)', marginBottom: '6px' }}>Product</label>
-                                <select value={bForm.product_id} onChange={e => setBForm({ ...bForm, product_id: e.target.value })}
-                                    style={{ width: '100%', background: 'var(--bg-input)', border: '1px solid var(--border)', borderRadius: 'var(--radius-md)', padding: '10px 14px', fontSize: '14px', color: 'var(--text-primary)', fontFamily: 'inherit' }} required>
-                                    <option value="">Select a product...</option>
-                                    {products.map(p => <option key={p.id} value={p.id}>{p.name}</option>)}
-                                </select>
-                            </div>
+                            preselectedProduct ? (
+                                <div style={{
+                                    display: 'flex', alignItems: 'center', gap: '12px',
+                                    background: 'var(--primary-bg)', border: '1px solid rgba(37,99,235,0.2)',
+                                    borderRadius: '10px', padding: '12px 16px'
+                                }}>
+                                    <div style={{
+                                        width: '38px', height: '38px', borderRadius: '10px',
+                                        background: 'var(--primary)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0
+                                    }}>
+                                        <Package size={18} color="white" />
+                                    </div>
+                                    <div style={{ flex: 1, minWidth: 0 }}>
+                                        <p style={{ fontSize: '14px', fontWeight: 600, color: 'var(--text-primary)', marginBottom: '2px' }}>{preselectedProduct.name}</p>
+                                        <p style={{ fontSize: '12px', color: 'var(--text-muted)' }}>{preselectedProduct.category} &bull; Current stock: {preselectedProduct.total_stock || 0}</p>
+                                    </div>
+                                    <button type="button" onClick={() => { setPreselectedProduct(null); setBForm({ ...bForm, product_id: '' }); }}
+                                        style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--text-muted)', padding: '4px' }}
+                                        title="Change product"
+                                    >
+                                        <X size={16} />
+                                    </button>
+                                </div>
+                            ) : (
+                                <div>
+                                    <label style={{ display: 'block', fontSize: '13px', fontWeight: 500, color: 'var(--text-secondary)', marginBottom: '6px' }}>Product</label>
+                                    <select value={bForm.product_id} onChange={e => setBForm({ ...bForm, product_id: e.target.value })}
+                                        style={{ width: '100%', background: 'var(--bg-input)', border: '1px solid var(--border)', borderRadius: 'var(--radius-md)', padding: '10px 14px', fontSize: '14px', color: 'var(--text-primary)', fontFamily: 'inherit' }} required>
+                                        <option value="">Select a product...</option>
+                                        {products.map(p => <option key={p.id} value={p.id}>{p.name} (Stock: {p.total_stock || 0})</option>)}
+                                    </select>
+                                </div>
+                            )
                         )}
-                        <InputField label="Quantity" type="number" value={bForm.quantity} onChange={v => setBForm({ ...bForm, quantity: v })} placeholder="Enter quantity" required />
-                        <InputField label="Expiry Date" type="date" value={bForm.expiry_date} onChange={v => setBForm({ ...bForm, expiry_date: v })} required />
+
+                        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
+                            <InputField label="Quantity to Add" type="number" min="1" value={bForm.quantity} onChange={v => setBForm({ ...bForm, quantity: v })} placeholder="e.g. 50" required />
+                            <InputField label="Expiry Date" type="date" value={bForm.expiry_date} onChange={v => setBForm({ ...bForm, expiry_date: v })} required />
+                        </div>
+
                         <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '10px', paddingTop: '8px' }}>
                             <CancelBtn onClick={closeBatchModal} />
-                            <SubmitBtn label={editingBatch ? 'Update' : 'Add Batch'} />
+                            <SubmitBtn label={editingBatch ? 'Update Batch' : 'Add Stock'} />
                         </div>
                     </form>
                 </Modal>
@@ -357,13 +453,13 @@ const tdStyle = { padding: '14px 24px', fontSize: '14px', color: 'var(--text-sec
 const iconBtn = { padding: '6px', borderRadius: '8px', border: '1px solid var(--border)', background: 'var(--bg-card)', color: 'var(--text-muted)', cursor: 'pointer', display: 'flex', alignItems: 'center' };
 const tableAction = { padding: '6px', borderRadius: '6px', border: 'none', background: 'transparent', color: 'var(--text-muted)', cursor: 'pointer', display: 'flex', alignItems: 'center' };
 
-const ActionBtn = ({ onClick, label }) => (
+const ActionBtn = ({ onClick, label, icon }) => (
     <button onClick={onClick} style={{
         display: 'flex', alignItems: 'center', gap: '8px',
         background: 'var(--primary)', color: 'white', padding: '10px 20px',
         borderRadius: 'var(--radius-md)', border: 'none', fontSize: '13px', fontWeight: 600,
         cursor: 'pointer', boxShadow: '0 1px 3px rgba(37,99,235,0.3)'
-    }}><Plus size={16} /> {label}</button>
+    }}>{icon || <Plus size={16} />} {label}</button>
 );
 
 const TabBtn = ({ active, onClick, label, count }) => (

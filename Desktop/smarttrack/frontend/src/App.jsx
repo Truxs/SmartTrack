@@ -3,15 +3,16 @@ import { AuthProvider, useAuth } from './context/AuthContext';
 
 /* Layouts */
 import AdminLayout from './layouts/AdminLayout';
-import UserLayout from './layouts/UserLayout';
 
 /* Pages */
 import Login from './pages/Login';
 import Dashboard from './pages/admin/Dashboard';
 import Products from './pages/admin/Products';
 import Orders from './pages/admin/Orders';
-import Checkout from './pages/admin/Checkout';
+import AdminCheckout from './pages/admin/Checkout';
 import StoreFront from './pages/user/StoreFront';
+import UserDashboard from './pages/user/UserDashboard';
+import UserCheckout from './pages/user/Checkout';
 
 /* Route guard — redirects based on auth state */
 const ProtectedRoute = ({ children, requireAdmin }) => {
@@ -28,7 +29,7 @@ const ProtectedRoute = ({ children, requireAdmin }) => {
     );
 
     if (!user) return <Navigate to="/login" />;
-    if (requireAdmin && user.role !== 'admin') return <Navigate to="/store" />;
+    if (requireAdmin && user.role !== 'admin') return <Navigate to="/dashboard" />;
     if (!requireAdmin && user.role === 'admin') return <Navigate to="/admin" />;
     return children;
 };
@@ -50,17 +51,35 @@ function App() {
                         <Route index element={<Dashboard />} />
                         <Route path="products" element={<Products />} />
                         <Route path="orders" element={<Orders />} />
-                        <Route path="checkout" element={<Checkout />} />
+                        <Route path="checkout" element={<AdminCheckout />} />
                     </Route>
 
-                    {/* User Routes (nested under UserLayout) */}
+                    {/* User Routes */}
+                    <Route path="/" element={
+                        <ProtectedRoute>
+                            <UserDashboard />
+                        </ProtectedRoute>
+                    } />
+                    <Route path="/dashboard" element={
+                        <ProtectedRoute>
+                            <UserDashboard />
+                        </ProtectedRoute>
+                    } />
+                    <Route path="/checkout" element={
+                        <ProtectedRoute>
+                            <UserCheckout />
+                        </ProtectedRoute>
+                    } />
                     <Route path="/store" element={
                         <ProtectedRoute>
-                            <UserLayout />
+                            <StoreFront />
                         </ProtectedRoute>
-                    }>
-                        <Route index element={<StoreFront />} />
-                    </Route>
+                    } />
+                    <Route path="/wishlist" element={
+                        <ProtectedRoute>
+                            <div style={{ padding: '24px' }}><h1 style={{ fontSize: '24px', fontWeight: 700 }}>Wishlist</h1></div>
+                        </ProtectedRoute>
+                    } />
 
                     {/* Fallback */}
                     <Route path="*" element={<Navigate to="/login" />} />
