@@ -9,10 +9,10 @@ app.use(cors());
 app.use(express.json());
 
 app.use('/api/auth', authRouter);
-app.use('/api/products', authenticate, require('./routes/products'));
-app.use('/api/stock', authenticate, require('./routes/stock'));
-app.use('/api/sales', authenticate, require('./routes/sales'));
-app.use('/api/alerts', authenticate, require('./routes/alerts'));
+app.use('/api/products', require('./routes/products'));
+app.use('/api/stock', require('./routes/stock'));
+app.use('/api/sales', require('./routes/sales'));
+app.use('/api/alerts', require('./routes/alerts'));
 
 app.get('/api/health', (req, res) => {
     res.json({ status: 'OK', database: 'grocery_inventory' });

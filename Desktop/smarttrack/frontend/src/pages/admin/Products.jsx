@@ -54,8 +54,8 @@ const Products = () => {
 
     const fetchData = async () => {
         const [pr, st] = await Promise.all([getProducts(), getStock()]);
-        setProducts(pr.data);
-        setStock(st.data);
+        setProducts(pr || []);
+        setStock(st || []);
     };
 
     /* ---- Product CRUD ---- */

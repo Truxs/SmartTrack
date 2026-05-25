@@ -6,7 +6,8 @@ import { ShoppingCart, LogIn, UserPlus } from 'lucide-react';
 
 const Login = () => {
     const [formData, setFormData] = useState({ email: '', password: '' });
-    const [error, setError] = useState('');
+    const [error, setError]     = useState('');
+    const [success, setSuccess] = useState('');
     const [loading, setLoading] = useState(false);
     const [isRegister, setIsRegister] = useState(false);
     const navigate = useNavigate();
@@ -16,15 +17,21 @@ const Login = () => {
         e.preventDefault();
         setLoading(true);
         setError('');
-        
+        setSuccess('');
+
         try {
-            const apiCall = isRegister ? registerApi : loginApi;
-            const credentials = { username: formData.email, password: formData.password };
-            const res = await apiCall(credentials);
-            login(res.data);
-            navigate(res.data.user.role === 'admin' ? '/admin' : '/dashboard');
+            if (isRegister) {
+                await registerApi({ email: formData.email, password: formData.password });
+                setSuccess('Account created successfully! You can now sign in.');
+                setIsRegister(false);
+                setFormData({ email: formData.email, password: '' });
+            } else {
+                const res = await loginApi({ email: formData.email, password: formData.password });
+                login({ token: res.token, user: res.user });
+                navigate(res.user.role === 'admin' ? '/admin' : '/dashboard');
+            }
         } catch (err) {
-            setError(err.response?.data?.error || 'Operation failed');
+            setError(err.response?.data?.error || err.response?.data?.message || 'Operation failed. Check your connection.');
         } finally {
             setLoading(false);
         }
@@ -42,12 +49,10 @@ const Login = () => {
                     alt="Fresh grocery store"
                     style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }}
                 />
-                {/* Gradient overlay */}
                 <div style={{
                     position: 'absolute', inset: 0,
                     background: 'linear-gradient(160deg, rgba(15,23,60,0.75) 0%, rgba(37,99,235,0.55) 100%)'
                 }} />
-                {/* Brand text pinned to bottom */}
                 <div style={{
                     position: 'absolute', bottom: 0, left: 0, right: 0,
                     padding: '48px 52px 60px',
@@ -71,7 +76,6 @@ const Login = () => {
                     }}>
                         Shop Smart,<br />Stay on Track.
                     </h2>
-
                 </div>
             </div>
 
@@ -152,6 +156,16 @@ const Login = () => {
                             </div>
                         )}
 
+                        {success && (
+                            <div style={{
+                                background: '#f0fdf4', border: '1px solid #bbf7d0',
+                                color: '#16a34a', padding: '12px 16px',
+                                borderRadius: '10px', fontSize: '13px', fontWeight: 500
+                            }}>
+                                {success}
+                            </div>
+                        )}
+
                         <button type="submit" disabled={loading} style={{
                             width: '100%',
                             background: 'linear-gradient(135deg, #2563eb, #3b82f6)',
@@ -164,14 +178,14 @@ const Login = () => {
                             transition: 'all 0.2s ease',
                             marginTop: '4px'
                         }}>
-                            {loading ? (isRegister ? 'Creating account...' : 'Signing in...') : 
+                            {loading ? (isRegister ? 'Creating account...' : 'Signing in...') :
                              isRegister ? <><UserPlus size={18} /> Sign Up</> : <><LogIn size={18} /> Sign In</>}
                         </button>
-                        
+
                         <div style={{ textAlign: 'center', marginTop: '12px' }}>
-                            <button 
+                            <button
                                 type="button"
-                                onClick={() => { setIsRegister(!isRegister); setError(''); }}
+                                onClick={() => { setIsRegister(!isRegister); setError(''); setSuccess(''); }}
                                 style={{
                                     fontSize: '14px', color: '#2563eb', fontWeight: 600,
                                     background: 'transparent', border: 'none', cursor: 'pointer'
@@ -181,7 +195,6 @@ const Login = () => {
                             </button>
                         </div>
                     </form>
-
 
                 </div>
             </div>

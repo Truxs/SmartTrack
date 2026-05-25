@@ -5,24 +5,21 @@ const db = require('../config/db');
 
 const JWT_SECRET = 'your-secret-key-change-in-production';
 
-// Login route - accepts either username OR email
+// Login route
 router.post('/login', async (req, res) => {
-    const { username, password } = req.body;
+    const { email, password } = req.body;
     try {
-        // Check by username OR email
+        // Check by email
         const [users] = await db.query(
-            'SELECT * FROM users WHERE username = ? OR email = ?', 
-            [username, username]
+            'SELECT * FROM users WHERE email = ?', 
+            [email]
         );
         
         if (users.length === 0) return res.status(401).json({ error: 'Invalid email or password' });
         
         const user = users[0];
-        // Simple check - in production use bcrypt
-        if (user.role === 'admin' && password !== '@dm1n@dm1n') {
-            return res.status(401).json({ error: 'Invalid email or password' });
-        }
-        if (user.role === 'user' && password !== 'user123') {
+        // Compare password against stored password
+        if (password !== user.password) {
             return res.status(401).json({ error: 'Invalid email or password' });
         }
         

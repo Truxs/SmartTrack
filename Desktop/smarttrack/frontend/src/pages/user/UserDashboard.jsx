@@ -161,7 +161,7 @@ const UserDashboardWrapper = () => {
                     name: p.name,
                     category: p.category?.toLowerCase() || 'pantry',
                     price: Number(p.price),
-                    stock: Number(p.stock),
+                    stock: Number(p.total_stock) || 0,
                     image: getProductImage(p.name, p.category)
                 }));
                 setProducts(productsWithImages);

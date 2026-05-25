@@ -21,15 +21,14 @@ const Checkout = () => {
     const fetchProducts = async () => {
         try {
             const res = await getProducts();
-            setProducts(res.data);
+            setProducts(res || []);
         } catch (err) { console.error(err); }
     };
 
     const lookupProduct = async (code) => {
         if (!code.trim()) return;
         try {
-            const res = await getProductByBarcode(code.trim());
-            const product = res.data;
+            const product = await getProductByBarcode(code.trim());
             addToCart(product);
             setBarcode('');
             setMessage(null);

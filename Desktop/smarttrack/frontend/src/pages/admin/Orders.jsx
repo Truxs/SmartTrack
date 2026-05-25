@@ -20,7 +20,7 @@ const Orders = () => {
     const fetchSales = async () => {
         try {
             const res = await getSalesHistory();
-            setSales(res.data);
+            setSales(res || []);
         } catch (err) { console.error(err); }
         finally { setLoading(false); }
     };
