@@ -5,11 +5,10 @@ import { getProducts } from '../../api/api';
 import {
     PackageOpen, Tag, Filter, ArrowUpDown, X, Plus, Minus, Trash2, ShoppingCart, LogOut,
     Globe, Home, Package, Fish, Snowflake, Microwave, ChefHat, Thermometer, Utensils,
-    ShoppingBag, Layers, Coffee, HeartPulse, PawPrint, ShieldCheck, Search, Settings, User
+    ShoppingBag, Layers, Coffee, Heart, PawPrint, ShieldCheck, Search, Settings, User, Edit, Check
 } from 'lucide-react';
 import UserLayout from '../../layouts/UserLayout';
 
-/* Map product name/category → real Unsplash photo */
 const getProductImage = (name = '', category = '') => {
     const n = name.toLowerCase();
     const c = category.toLowerCase();
@@ -51,15 +50,14 @@ const CATEGORIES = [
     { id: 'pantry', name: 'Pantry', icon: Layers },
     { id: 'snacks', name: 'Snacks', icon: PackageOpen },
     { id: 'beverages', name: 'Beverages', icon: Coffee },
-    { id: 'health-beauty', name: 'Health & Beauty', icon: HeartPulse },
+    { id: 'health-beauty', name: 'Health & Beauty', icon: Heart },
     { id: 'home-care', name: 'Home Care', icon: Home },
     { id: 'pet-care', name: 'Pet Care', icon: PawPrint },
     { id: 'health-hygiene', name: 'Health & Hygiene Essentials', icon: ShieldCheck },
 ];
 
-/* Cart Sidebar */
-const CartSidebar = ({ isOpen, onClose, cart, onUpdateQty, onRemoveItem, onCheckout }) => {
-    const total = cart.reduce((sum, item) => sum + item.price * item.qty, 0);
+const CartSidebar = ({ isOpen, onClose, cart, onUpdateQty, onRemoveItem, onCheckout, onToggleWishlist, favorites }) => {
+    const cartCount = cart.reduce((sum, item) => sum + item.qty, 0);
     
     if (!isOpen) return null;
     
@@ -69,9 +67,16 @@ const CartSidebar = ({ isOpen, onClose, cart, onUpdateQty, onRemoveItem, onCheck
             <div style={{ position: 'absolute', right: 0, top: 0, height: '100%', width: '420px', background: 'var(--bg-card)', boxShadow: 'var(--shadow-xl)', display: 'flex', flexDirection: 'column' }}>
                 <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '20px 24px', borderBottom: '1px solid var(--border)' }}>
                     <h2 style={{ fontSize: '18px', fontWeight: 700, color: 'var(--text-primary)', margin: 0 }}>Your Cart</h2>
-                    <button onClick={onClose} style={{ padding: '8px', borderRadius: '100%', border: 'none', background: 'transparent', cursor: 'pointer', color: 'var(--text-secondary)' }}>
-                        <X size={20} />
-                    </button>
+                    <div style={{ display: 'flex', gap: '8px' }}>
+                        {favorites.length > 0 && (
+                            <button onClick={() => onToggleWishlist()} style={{ padding: '8px', borderRadius: '100%', border: 'none', background: 'transparent', cursor: 'pointer', color: 'var(--text-secondary)' }} title="Wishlist">
+                                <Heart size={20} fill="#ef4444" color="#ef4444" />
+                            </button>
+                        )}
+                        <button onClick={onClose} style={{ padding: '8px', borderRadius: '100%', border: 'none', background: 'transparent', cursor: 'pointer', color: 'var(--text-secondary)' }}>
+                            <X size={20} />
+                        </button>
+                    </div>
                 </div>
                 
                 <div style={{ flex: 1, overflowY: 'auto', padding: '24px', display: 'flex', flexDirection: 'column', gap: '16px' }}>
@@ -125,14 +130,95 @@ const CartSidebar = ({ isOpen, onClose, cart, onUpdateQty, onRemoveItem, onCheck
                 {cart.length > 0 && (
                     <div style={{ padding: '24px', borderTop: '1px solid var(--border)' }}>
                         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '16px' }}>
-                            <span style={{ fontSize: '14px', color: 'var(--text-secondary)' }}>Total</span>
-                            <span style={{ fontSize: '24px', fontWeight: 700, color: 'var(--text-primary)' }}>₱{total.toFixed(2)}</span>
+                            <span style={{ fontSize: '14px', color: 'var(--text-secondary)' }}>Items</span>
+                            <span style={{ fontSize: '24px', fontWeight: 700, color: 'var(--text-primary)' }}>{cartCount}</span>
                         </div>
                         <button onClick={onCheckout} style={{ width: '100%', padding: '14px', borderRadius: '12px', background: 'var(--primary)', color: 'white', border: 'none', cursor: 'pointer', fontSize: '14px', fontWeight: 700 }}>
                             Checkout
                         </button>
                     </div>
                 )}
+            </div>
+        </div>
+    );
+};
+
+const FilterModal = ({ isOpen, onClose, categories, selectedCategories, onToggleCategory }) => {
+    if (!isOpen) return null;
+    return (
+        <div style={{ position: 'fixed', inset: 0, zIndex: 50, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '16px' }}>
+            <div style={{ position: 'absolute', inset: 0, background: 'rgba(0, 0, 0, 0.5)' }} onClick={onClose} />
+            <div style={{ position: 'relative', background: 'var(--bg-card)', borderRadius: '16px', width: '100%', maxWidth: '400px', maxHeight: '80vh', overflow: 'hidden', boxShadow: 'var(--shadow-xl)' }}>
+                <div style={{ padding: '20px 24px', borderBottom: '1px solid var(--border)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                    <h2 style={{ fontSize: '18px', fontWeight: 700, color: 'var(--text-primary)', margin: 0 }}>Filters</h2>
+                    <button onClick={onClose} style={{ padding: '6px', borderRadius: '8px', border: 'none', background: 'transparent', cursor: 'pointer', color: 'var(--text-secondary)' }}>
+                        <X size={20} />
+                    </button>
+                </div>
+                <div style={{ padding: '16px 24px', overflowY: 'auto', maxHeight: '60vh' }}>
+                    {categories.map(cat => (
+                        <label key={cat} style={{ display: 'flex', alignItems: 'center', gap: '12px', padding: '12px 0', cursor: 'pointer', borderBottom: '1px solid var(--border-light)' }}>
+                            <input 
+                                type="checkbox" 
+                                checked={selectedCategories.includes(cat)} 
+                                onChange={() => onToggleCategory(cat)}
+                                style={{ width: '18px', height: '18px', cursor: 'pointer' }}
+                            />
+                            <span style={{ fontSize: '14px', color: 'var(--text-primary)' }}>{cat}</span>
+                        </label>
+                    ))}
+                </div>
+                <div style={{ padding: '16px 24px', borderTop: '1px solid var(--border)', display: 'flex', gap: '12px' }}>
+                    <button onClick={onClose} style={{ flex: 1, padding: '12px', borderRadius: '10px', border: '1px solid var(--border)', background: 'var(--bg-card)', color: 'var(--text-secondary)', cursor: 'pointer', fontSize: '14px', fontWeight: 600 }}>
+                        Close
+                    </button>
+                </div>
+            </div>
+        </div>
+    );
+};
+
+const WishlistPage = ({ favorites, products, onClose, onRemoveFromFavorites, onAddToCart }) => {
+    const favoriteProducts = products.filter(p => favorites.includes(p.id));
+    return (
+        <div style={{ position: 'fixed', inset: 0, zIndex: 50 }}>
+            <div style={{ position: 'absolute', inset: 0, background: 'rgba(0, 0, 0, 0.5)' }} onClick={onClose} />
+            <div style={{ position: 'absolute', right: 0, top: 0, height: '100%', width: '500px', background: 'var(--bg-card)', boxShadow: 'var(--shadow-xl)', display: 'flex', flexDirection: 'column' }}>
+                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '20px 24px', borderBottom: '1px solid var(--border)' }}>
+                    <h2 style={{ fontSize: '18px', fontWeight: 700, color: 'var(--text-primary)', margin: 0 }}>Wishlist</h2>
+                    <button onClick={onClose} style={{ padding: '8px', borderRadius: '100%', border: 'none', background: 'transparent', cursor: 'pointer', color: 'var(--text-secondary)' }}>
+                        <X size={20} />
+                    </button>
+                </div>
+                <div style={{ flex: 1, overflowY: 'auto', padding: '24px', display: 'flex', flexDirection: 'column', gap: '16px' }}>
+                    {favoriteProducts.length === 0 ? (
+                        <div style={{ textAlign: 'center', padding: '48px 0', color: 'var(--text-muted)' }}>
+                            <div style={{ fontSize: '14px', marginTop: '12px' }}>Your wishlist is empty</div>
+                        </div>
+                    ) : (
+                        favoriteProducts.map(product => (
+                            <div key={product.id} style={{ display: 'flex', gap: '16px', padding: '12px', background: 'var(--bg-input)', borderRadius: '12px' }}>
+                                <div style={{ width: '80px', height: '80px', background: 'var(--bg-card)', borderRadius: '8px', overflow: 'hidden', flexShrink: 0 }}>
+                                    <img src={product.image} alt={product.name} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                                </div>
+                                <div style={{ flex: 1, minWidth: 0, display: 'flex', flexDirection: 'column', justifyContent: 'space-between' }}>
+                                    <div>
+                                        <h4 style={{ fontSize: '14px', fontWeight: 600, color: 'var(--text-primary)', margin: 0, lineHeight: 1.4 }}>{product.name}</h4>
+                                        <div style={{ fontSize: '16px', fontWeight: 700, color: 'var(--text-primary)', marginTop: '4px' }}>₱{product.price.toFixed(2)}</div>
+                                    </div>
+                                    <div style={{ display: 'flex', gap: '8px', marginTop: '8px' }}>
+                                        <button onClick={() => onAddToCart(product)} style={{ flex: 1, padding: '8px', borderRadius: '8px', border: '1px solid var(--primary)', background: 'var(--primary-bg)', color: 'var(--primary)', cursor: 'pointer', fontSize: '13px', fontWeight: 600 }}>
+                                            Add to Cart
+                                        </button>
+                                        <button onClick={() => onRemoveFromFavorites(product.id)} style={{ padding: '8px', borderRadius: '8px', border: '1px solid var(--border)', background: 'var(--bg-card)', color: '#ef4444', cursor: 'pointer' }}>
+                                            <Trash2 size={16} />
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        ))
+                    )}
+                </div>
             </div>
         </div>
     );
@@ -150,6 +236,10 @@ const UserDashboardWrapper = () => {
     const [cart, setCart] = useState([]);
     const [isCartOpen, setIsCartOpen] = useState(false);
     const [favorites, setFavorites] = useState([]);
+    const [sortBy, setSortBy] = useState('Popularity');
+    const [isFilterModalOpen, setIsFilterModalOpen] = useState(false);
+    const [selectedFilterCategories, setSelectedFilterCategories] = useState([]);
+    const [isWishlistOpen, setIsWishlistOpen] = useState(false);
 
     useEffect(() => {
         const fetchData = async () => {
@@ -162,7 +252,10 @@ const UserDashboardWrapper = () => {
                     category: p.category?.toLowerCase() || 'pantry',
                     price: Number(p.price),
                     stock: Number(p.total_stock) || 0,
-                    image: getProductImage(p.name, p.category)
+                    image: getProductImage(p.name, p.category),
+                    isNew: Math.random() > 0.7,
+                    isOnSale: Math.random() > 0.8,
+                    createdAt: new Date(Date.now() - Math.random() * 30 * 24 * 60 * 60 * 1000)
                 }));
                 setProducts(productsWithImages);
             } catch (err) {
@@ -172,9 +265,13 @@ const UserDashboardWrapper = () => {
             }
         };
         fetchData();
+        const interval = setInterval(fetchData, 10000);
+        return () => clearInterval(interval);
     }, []);
 
-    const filteredProducts = products.filter(p => {
+    const productCategories = [...new Set(products.map(p => p.category))];
+
+    let filteredProducts = products.filter(p => {
         let matchesCategory = selectedCategory === 'only-sm' || p.category === selectedCategory;
         if (selectedCategory === 'only-sm') {
             matchesCategory = true;
@@ -189,9 +286,28 @@ const UserDashboardWrapper = () => {
         } else if (selectedCategory === 'health-hygiene' && p.category === 'health-beauty') {
             matchesCategory = true;
         }
+        
+        if (selectedFilterCategories.length > 0) {
+            matchesCategory = matchesCategory && selectedFilterCategories.includes(p.category);
+        }
+
         const matchesSearch = p.name.toLowerCase().includes(search.toLowerCase());
-        return matchesCategory && matchesSearch;
+        
+        let matchesTopTab = true;
+        if (topTab === 'New') {
+            matchesTopTab = p.isNew;
+        } else if (topTab === 'Sale') {
+            matchesTopTab = p.isOnSale;
+        }
+
+        return matchesCategory && matchesSearch && matchesTopTab;
     });
+
+    if (sortBy === 'Price: Low → High') {
+        filteredProducts = [...filteredProducts].sort((a, b) => a.price - b.price);
+    } else if (sortBy === 'Price: High → Low') {
+        filteredProducts = [...filteredProducts].sort((a, b) => b.price - a.price);
+    }
 
     const handleAddToCart = (product) => {
         setCart(prev => {
@@ -201,7 +317,6 @@ const UserDashboardWrapper = () => {
             }
             return [...prev, { ...product, qty: 1 }];
         });
-        setIsCartOpen(true);
     };
 
     const handleUpdateQty = (id, qty) => {
@@ -216,9 +331,18 @@ const UserDashboardWrapper = () => {
         setCart(prev => prev.filter(item => item.id !== id));
     };
 
+    const toggleFavorite = (productId) => {
+        setFavorites(prev => prev.includes(productId) ? prev.filter(x => x !== productId) : [...prev, productId]);
+    };
+
+    const toggleFilterCategory = (cat) => {
+        setSelectedFilterCategories(prev => 
+            prev.includes(cat) ? prev.filter(x => x !== cat) : [...prev, cat]
+        );
+    };
+
     const cartCount = cart.reduce((sum, item) => sum + item.qty, 0);
 
-    // Create sidebar
     const userSidebar = (
         <aside style={{
             width: 'var(--sidebar-width)',
@@ -231,7 +355,6 @@ const UserDashboardWrapper = () => {
             zIndex: 40,
             boxShadow: '2px 0 8px rgba(0,0,0,0.03)'
         }}>
-            {/* Logo */}
             <div style={{ padding: '24px 24px 20px', borderBottom: '1px solid var(--border-light)' }}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
                     <div style={{
@@ -254,7 +377,6 @@ const UserDashboardWrapper = () => {
                 </div>
             </div>
 
-            {/* Nav Links */}
             <nav style={{ flex: 1, padding: '16px 12px', display: 'flex', flexDirection: 'column', gap: '4px', overflowY: 'auto' }}>
                 <div style={{ padding: '8px 12px', fontSize: '11px', fontWeight: 700, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.08em' }}>
                     Categories
@@ -289,7 +411,6 @@ const UserDashboardWrapper = () => {
                 })}
             </nav>
 
-            {/* User Section */}
             <div style={{ padding: '16px', borderTop: '1px solid var(--border-light)', marginTop: 'auto' }}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: '12px', padding: '8px' }}>
                     <div style={{
@@ -322,14 +443,12 @@ const UserDashboardWrapper = () => {
 
     return (
         <UserLayout sidebar={userSidebar}>
-            {/* Top Navbar */}
             <div style={{
                 display: 'flex', alignItems: 'center', gap: '16px',
                 padding: '20px 24px',
                 background: 'var(--bg-card)',
                 borderBottom: '1px solid var(--border)'
             }}>
-                {/* Search */}
                 <div style={{
                     flex: 1,
                     display: 'flex',
@@ -357,7 +476,6 @@ const UserDashboardWrapper = () => {
                     />
                 </div>
 
-                {/* Top Tabs */}
                 <div style={{ display: 'flex', gap: '8px' }}>
                     {['All', 'New', 'Sale'].map(tab => (
                         <button
@@ -379,9 +497,8 @@ const UserDashboardWrapper = () => {
                     ))}
                 </div>
 
-                {/* Filters & Sort */}
                 <div style={{ display: 'flex', gap: '12px', alignItems: 'center' }}>
-                    <button style={{
+                    <button onClick={() => setIsFilterModalOpen(true)} style={{
                         display: 'flex', alignItems: 'center', gap: '8px',
                         padding: '10px 16px',
                         borderRadius: '10px',
@@ -394,6 +511,18 @@ const UserDashboardWrapper = () => {
                     }}>
                         <Filter size={16} />
                         Filters
+                        {selectedFilterCategories.length > 0 && (
+                            <span style={{ 
+                                background: 'var(--primary)', 
+                                color: 'white', 
+                                padding: '2px 8px', 
+                                borderRadius: '9999px', 
+                                fontSize: '11px', 
+                                fontWeight: 700 
+                            }}>
+                                {selectedFilterCategories.length}
+                            </span>
+                        )}
                     </button>
                     <div style={{
                         display: 'flex', alignItems: 'center', gap: '8px',
@@ -403,15 +532,19 @@ const UserDashboardWrapper = () => {
                         background: 'var(--bg-card)'
                     }}>
                         <span style={{ fontSize: '13px', color: 'var(--text-secondary)', fontWeight: 500 }}>Sort by</span>
-                        <select style={{
-                            border: 'none',
-                            background: 'transparent',
-                            color: 'var(--text-primary)',
-                            fontSize: '13px',
-                            fontWeight: 600,
-                            outline: 'none',
-                            cursor: 'pointer'
-                        }}>
+                        <select 
+                            value={sortBy} 
+                            onChange={(e) => setSortBy(e.target.value)}
+                            style={{
+                                border: 'none',
+                                background: 'transparent',
+                                color: 'var(--text-primary)',
+                                fontSize: '13px',
+                                fontWeight: 600,
+                                outline: 'none',
+                                cursor: 'pointer'
+                            }}
+                        >
                             <option>Popularity</option>
                             <option>Price: Low → High</option>
                             <option>Price: High → Low</option>
@@ -420,7 +553,6 @@ const UserDashboardWrapper = () => {
                     </div>
                 </div>
 
-                {/* Cart Button */}
                 <button onClick={() => setIsCartOpen(true)} style={{
                     position: 'relative',
                     width: '42px', height: '42px',
@@ -448,9 +580,7 @@ const UserDashboardWrapper = () => {
                 </button>
             </div>
 
-            {/* Main Content */}
             <div style={{ padding: '24px' }}>
-                {/* Breadcrumb */}
                 <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '16px' }}>
                     <span style={{ fontSize: '13px', color: 'var(--text-secondary)' }}>Home</span>
                     <span style={{ fontSize: '12px', color: 'var(--text-muted)' }}>/</span>
@@ -465,7 +595,6 @@ const UserDashboardWrapper = () => {
                     </h2>
                 </div>
 
-                {/* Product Grid */}
                 {loading ? (
                     <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '20px' }}>
                         {[1,2,3,4].map(i => (
@@ -492,7 +621,6 @@ const UserDashboardWrapper = () => {
                                     flexDirection: 'column',
                                     transition: 'box-shadow 0.2s ease'
                                 }}>
-                                    {/* Image */}
                                     <div style={{ position: 'relative' }}>
                                         <div style={{
                                             width: '100%', aspectRatio: '1/1',
@@ -500,7 +628,33 @@ const UserDashboardWrapper = () => {
                                         }}>
                                             <img src={product.image} alt={product.name} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
                                         </div>
-                                        <button onClick={() => setFavorites(prev => prev.includes(product.id) ? prev.filter(x => x !== product.id) : [...prev, product.id])} style={{
+                                        <div style={{ position: 'absolute', top: '12px', left: '12px', display: 'flex', gap: '8px' }}>
+                                            {product.isNew && (
+                                                <span style={{
+                                                    background: '#dbeafe',
+                                                    color: '#1d4ed8',
+                                                    padding: '4px 10px',
+                                                    borderRadius: '9999px',
+                                                    fontSize: '11px',
+                                                    fontWeight: 700
+                                                }}>
+                                                    New
+                                                </span>
+                                            )}
+                                            {product.isOnSale && (
+                                                <span style={{
+                                                    background: '#fef2f2',
+                                                    color: '#dc2626',
+                                                    padding: '4px 10px',
+                                                    borderRadius: '9999px',
+                                                    fontSize: '11px',
+                                                    fontWeight: 700
+                                                }}>
+                                                    Sale
+                                                </span>
+                                            )}
+                                        </div>
+                                        <button onClick={() => toggleFavorite(product.id)} style={{
                                             position: 'absolute',
                                             top: '12px', right: '12px',
                                             width: '34px', height: '34px',
@@ -512,11 +666,10 @@ const UserDashboardWrapper = () => {
                                             cursor: 'pointer',
                                             transition: 'transform 0.15s ease'
                                         }}>
-                                            <HeartPulse size={18} style={{ color: isFav ? '#ef4444' : '#94a3b8' }} fill={isFav ? '#ef4444' : 'none'} />
+                                            <Heart size={18} style={{ color: isFav ? '#ef4444' : '#94a3b8' }} fill={isFav ? '#ef4444' : 'none'} />
                                         </button>
                                     </div>
 
-                                    {/* Content */}
                                     <div style={{ padding: '16px', display: 'flex', flexDirection: 'column', gap: '12px' }}>
                                         <div>
                                             <h3 style={{ fontSize: '15px', fontWeight: 700, color: 'var(--text-primary)', margin: 0, lineHeight: 1.3 }}>
@@ -581,7 +734,30 @@ const UserDashboardWrapper = () => {
                     setIsCartOpen(false);
                     navigate('/checkout', { state: { cart } });
                 }}
+                onToggleWishlist={() => {
+                    setIsCartOpen(false);
+                    setIsWishlistOpen(true);
+                }}
+                favorites={favorites}
             />
+
+            <FilterModal
+                isOpen={isFilterModalOpen}
+                onClose={() => setIsFilterModalOpen(false)}
+                categories={productCategories}
+                selectedCategories={selectedFilterCategories}
+                onToggleCategory={toggleFilterCategory}
+            />
+
+            {isWishlistOpen && (
+                <WishlistPage
+                    favorites={favorites}
+                    products={products}
+                    onClose={() => setIsWishlistOpen(false)}
+                    onRemoveFromFavorites={(id) => setFavorites(prev => prev.filter(x => x !== id))}
+                    onAddToCart={handleAddToCart}
+                />
+            )}
         </UserLayout>
     );
 };

@@ -38,7 +38,7 @@ const Login = () => {
     };
 
     return (
-        <div style={{ minHeight: '100vh', display: 'flex', fontFamily: 'Inter, system-ui, sans-serif' }}>
+        <div style={{ height: '100vh', display: 'flex', fontFamily: 'Inter, system-ui, sans-serif', overflow: 'hidden' }}>
 
             {/* ── Left Panel: Hero Image ── */}
             <div className="login-hero" style={{
@@ -84,14 +84,16 @@ const Login = () => {
                 width: '100%', maxWidth: '480px', flexShrink: 0,
                 background: '#ffffff',
                 display: 'flex', alignItems: 'center', justifyContent: 'center',
-                padding: '48px 40px',
-                boxShadow: '-8px 0 48px rgba(0,0,0,0.07)'
+                padding: '24px 20px',
+                boxShadow: '-8px 0 48px rgba(0,0,0,0.07)',
+                overflowY: 'auto',
+                height: '100vh'
             }}>
                 <div style={{ width: '100%', maxWidth: '380px' }}>
 
                     {/* Top brand mark */}
-                    <div style={{ marginBottom: '40px' }}>
-                        <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '32px' }}>
+                    <div style={{ marginBottom: '24px' }}>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '20px' }}>
                             <div style={{
                                 width: '46px', height: '46px',
                                 background: 'linear-gradient(135deg, #2563eb, #3b82f6)',
@@ -107,20 +109,20 @@ const Login = () => {
                             </div>
                         </div>
                         <h1 style={{
-                            fontSize: '28px', fontWeight: 800, color: '#0f172a',
-                            letterSpacing: '-0.03em', marginBottom: '8px'
+                            fontSize: '24px', fontWeight: 800, color: '#0f172a',
+                            letterSpacing: '-0.03em', marginBottom: '6px'
                         }}>
                             {isRegister ? 'Start your journey' : 'Welcome back'}
                         </h1>
-                        <p style={{ fontSize: '14px', color: '#64748b' }}>
+                        <p style={{ fontSize: '13px', color: '#64748b' }}>
                             {isRegister ? 'Create your account' : 'Sign in to your account to continue'}
                         </p>
                     </div>
 
                     {/* Form */}
-                    <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
+                    <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
                         <div>
-                            <label style={{ display: 'block', fontSize: '13px', fontWeight: 600, color: '#374151', marginBottom: '8px' }}>
+                            <label style={{ display: 'block', fontSize: '12px', fontWeight: 600, color: '#374151', marginBottom: '6px' }}>
                                 Email
                             </label>
                             <input
@@ -133,7 +135,7 @@ const Login = () => {
                             />
                         </div>
                         <div>
-                            <label style={{ display: 'block', fontSize: '13px', fontWeight: 600, color: '#374151', marginBottom: '8px' }}>
+                            <label style={{ display: 'block', fontSize: '12px', fontWeight: 600, color: '#374151', marginBottom: '6px' }}>
                                 Password
                             </label>
                             <input
@@ -149,8 +151,8 @@ const Login = () => {
                         {error && (
                             <div style={{
                                 background: '#fef2f2', border: '1px solid #fecaca',
-                                color: '#dc2626', padding: '12px 16px',
-                                borderRadius: '10px', fontSize: '13px', fontWeight: 500
+                                color: '#dc2626', padding: '10px 14px',
+                                borderRadius: '10px', fontSize: '12px', fontWeight: 500
                             }}>
                                 {error}
                             </div>
@@ -159,8 +161,8 @@ const Login = () => {
                         {success && (
                             <div style={{
                                 background: '#f0fdf4', border: '1px solid #bbf7d0',
-                                color: '#16a34a', padding: '12px 16px',
-                                borderRadius: '10px', fontSize: '13px', fontWeight: 500
+                                color: '#16a34a', padding: '10px 14px',
+                                borderRadius: '10px', fontSize: '12px', fontWeight: 500
                             }}>
                                 {success}
                             </div>
@@ -169,8 +171,8 @@ const Login = () => {
                         <button type="submit" disabled={loading} style={{
                             width: '100%',
                             background: 'linear-gradient(135deg, #2563eb, #3b82f6)',
-                            color: 'white', fontWeight: 700, padding: '14px',
-                            borderRadius: '12px', border: 'none', fontSize: '15px',
+                            color: 'white', fontWeight: 700, padding: '12px',
+                            borderRadius: '12px', border: 'none', fontSize: '14px',
                             cursor: loading ? 'not-allowed' : 'pointer',
                             display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px',
                             opacity: loading ? 0.7 : 1,
@@ -179,15 +181,15 @@ const Login = () => {
                             marginTop: '4px'
                         }}>
                             {loading ? (isRegister ? 'Creating account...' : 'Signing in...') :
-                             isRegister ? <><UserPlus size={18} /> Sign Up</> : <><LogIn size={18} /> Sign In</>}
+                             isRegister ? <><UserPlus size={16} /> Sign Up</> : <><LogIn size={16} /> Sign In</>}
                         </button>
 
-                        <div style={{ textAlign: 'center', marginTop: '12px' }}>
+                        <div style={{ textAlign: 'center', marginTop: '8px' }}>
                             <button
                                 type="button"
                                 onClick={() => { setIsRegister(!isRegister); setError(''); setSuccess(''); }}
                                 style={{
-                                    fontSize: '14px', color: '#2563eb', fontWeight: 600,
+                                    fontSize: '13px', color: '#2563eb', fontWeight: 600,
                                     background: 'transparent', border: 'none', cursor: 'pointer'
                                 }}
                             >
