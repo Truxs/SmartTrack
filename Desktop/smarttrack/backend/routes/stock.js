@@ -37,11 +37,12 @@ router.post('/', async (req, res) => {
     const { product_id, quantity, expiry_date } = req.body;
     try {
         const [result] = await db.query(
-            'INSERT INTO stock_batches (product_id, quantity, expiry_date) VALUES (?, ?, ?)',
+            'INSERT INTO stock_batches (product_id, quantity, expiry_date, date_received, is_depleted) VALUES (?, ?, ?, NOW(), FALSE)',
             [product_id, quantity, expiry_date]
         );
         res.status(201).json({ id: result.insertId, product_id, quantity, expiry_date });
     } catch (err) {
+        console.error('Stock add error:', err);
         res.status(500).json({ error: err.message });
     }
 });

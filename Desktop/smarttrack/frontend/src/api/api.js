@@ -27,12 +27,22 @@ export const register = async (credentials) => {
 };
 
 /* ---------- Products ---------- */
-export const getProducts         = async () => {
-    const response = await API.get('/products');
-    return response.data;
+export const getProducts         = async (params = {}) => {
+    const response = await API.get('/products', { params });
+    // Some legacy UI code expects an axios-like shape (result.data),
+    // while other parts expect the raw array/object. Provide both without touching UI.
+    const data = response.data;
+    if (data && typeof data === 'object' && !('data' in data)) {
+        try { data.data = data; } catch { /* ignore non-extensible */ }
+    }
+    return data;
 };
 export const getProductByBarcode = async (barcode) => {
     const response = await API.get(`/products/barcode/${barcode}`);
+    return response.data;
+};
+export const getProductById = async (id) => {
+    const response = await API.get(`/products/${id}`);
     return response.data;
 };
 export const createProduct       = async (data) => {
@@ -77,10 +87,146 @@ export const getSalesHistory     = async () => {
 export const getAlerts           = async () => {
     try {
         const response = await API.get('/alerts');
-        return response.data;
+        const data = response.data;
+        if (data && typeof data === 'object' && !('data' in data)) {
+            try { data.data = data; } catch { /* ignore */ }
+        }
+        return data;
     } catch (e) {
         return { low_stock: [], expired: [], expiring_soon: [] };
     }
+};
+
+/* ---------- Suppliers ---------- */
+export const getSuppliers = async () => {
+    const response = await API.get('/suppliers');
+    return response.data;
+};
+export const getSupplierById = async (id) => {
+    const response = await API.get(`/suppliers/${id}`);
+    return response.data;
+};
+export const createSupplier = async (data) => {
+    const response = await API.post('/suppliers', data);
+    return response.data;
+};
+export const updateSupplier = async (id, data) => {
+    const response = await API.put(`/suppliers/${id}`, data);
+    return response.data;
+};
+export const deleteSupplier = async (id) => {
+    const response = await API.delete(`/suppliers/${id}`);
+    return response.data;
+};
+
+/* ---------- Purchase Orders ---------- */
+export const getPurchaseOrders = async (status) => {
+    const response = await API.get('/purchase-orders' + (status ? `?status=${status}` : ''));
+    return response.data;
+};
+export const getPurchaseOrderById = async (id) => {
+    const response = await API.get(`/purchase-orders/${id}`);
+    return response.data;
+};
+export const createPurchaseOrder = async (data) => {
+    const response = await API.post('/purchase-orders', data);
+    return response.data;
+};
+export const updatePurchaseOrder = async (id, data) => {
+    const response = await API.put(`/purchase-orders/${id}`, data);
+    return response.data;
+};
+export const updatePurchaseOrderStatus = async (id, data) => {
+    const response = await API.put(`/purchase-orders/${id}/status`, data);
+    return response.data;
+};
+export const receivePurchaseOrder = async (id, data) => {
+    const response = await API.put(`/purchase-orders/${id}?action=receive`, data);
+    return response.data;
+};
+
+/* ---------- Stock Adjustments ---------- */
+export const getStockAdjustments = async (params = {}) => {
+    const response = await API.get('/stock-adjustments', { params });
+    return response.data;
+};
+export const createStockAdjustment = async (data) => {
+    const response = await API.post('/stock-adjustments', data);
+    return response.data;
+};
+
+/* ---------- Orders ---------- */
+export const getOrders = async (status) => {
+    const response = await API.get('/orders' + (status ? `?status=${status}` : ''));
+    return response.data;
+};
+export const getOrderById = async (id) => {
+    const response = await API.get(`/orders/${id}`);
+    return response.data;
+};
+export const updateOrder = async (id, data) => {
+    const response = await API.put(`/orders/${id}`, data);
+    return response.data;
+};
+export const deleteOrder = async (id) => {
+    const response = await API.delete(`/orders/${id}`);
+    return response.data;
+};
+
+/* ---------- Checkout ---------- */
+export const processCheckout = async (data) => {
+    const response = await API.post('/checkout', data);
+    return response.data;
+};
+export const getTransactionHistory = async () => {
+    const response = await API.get('/checkout');
+    return response.data;
+};
+
+/* ---------- Dashboard ---------- */
+export const getDashboardStats = async () => {
+    const response = await API.get('/dashboard');
+    return response.data;
+};
+
+/* ---------- User-Facing APIs ---------- */
+export const getCategories = async () => {
+    const response = await API.get('/categories');
+    return response.data;
+};
+export const getCategoryById = async (id) => {
+    const response = await API.get(`/categories/${id}`);
+    return response.data;
+};
+
+export const getCart = async (params = {}) => {
+    const response = await API.get('/cart', { params });
+    return response.data;
+};
+export const addToCart = async (data) => {
+    const response = await API.post('/cart/items', data);
+    return response.data;
+};
+export const updateCartItem = async (itemId, data) => {
+    const response = await API.put(`/cart/items/${itemId}`, data);
+    return response.data;
+};
+export const removeFromCart = async (itemId) => {
+    const response = await API.delete(`/cart/items/${itemId}`);
+    return response.data;
+};
+export const clearCart = async (params = {}) => {
+    const response = await API.delete('/cart', { params });
+    return response.data;
+};
+
+export const getUserOrders = async (params = {}) => {
+    const response = await API.get('/user-orders', { params });
+    return response.data;
+};
+export const getUserOrderById = async (id) => {
+    const response = await API.get(`/user-orders/${id}`);
+    return response.data;
 };
 
 export default API;

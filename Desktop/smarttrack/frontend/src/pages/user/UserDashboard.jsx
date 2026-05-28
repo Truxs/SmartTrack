@@ -254,7 +254,7 @@ const UserDashboardWrapper = () => {
                     stock: Number(p.total_stock) || 0,
                     image: getProductImage(p.name, p.category),
                     isNew: Math.random() > 0.7,
-                    isOnSale: Math.random() > 0.8,
+                    isOnSale: !!p.is_on_sale,
                     createdAt: new Date(Date.now() - Math.random() * 30 * 24 * 60 * 60 * 1000)
                 }));
                 setProducts(productsWithImages);
@@ -353,9 +353,11 @@ const UserDashboardWrapper = () => {
             position: 'fixed',
             top: 0, left: 0, bottom: 0,
             zIndex: 40,
-            boxShadow: '2px 0 8px rgba(0,0,0,0.03)'
+            boxShadow: '2px 0 8px rgba(0,0,0,0.03)',
+            margin: 0,
+            padding: 0
         }}>
-            <div style={{ padding: '24px 24px 20px', borderBottom: '1px solid var(--border-light)' }}>
+            <div style={{ padding: '20px 24px', borderBottom: '1px solid var(--border-light)' }}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
                     <div style={{
                         width: '42px', height: '42px',
@@ -441,13 +443,10 @@ const UserDashboardWrapper = () => {
         </aside>
     );
 
-    return (
-        <UserLayout sidebar={userSidebar}>
+    const userHeader = (
             <div style={{
                 display: 'flex', alignItems: 'center', gap: '16px',
-                padding: '20px 24px',
-                background: 'var(--bg-card)',
-                borderBottom: '1px solid var(--border)'
+                width: '100%'
             }}>
                 <div style={{
                     flex: 1,
@@ -579,7 +578,10 @@ const UserDashboardWrapper = () => {
                     )}
                 </button>
             </div>
+    );
 
+    return (
+        <UserLayout sidebar={userSidebar} headerContent={userHeader}>
             <div style={{ padding: '24px' }}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '16px' }}>
                     <span style={{ fontSize: '13px', color: 'var(--text-secondary)' }}>Home</span>
