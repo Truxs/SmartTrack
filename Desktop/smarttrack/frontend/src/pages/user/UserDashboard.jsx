@@ -245,18 +245,32 @@ const UserDashboardWrapper = () => {
         const fetchData = async () => {
             try {
                 const data = await getProducts();
-                const productsWithImages = data.map(p => ({
-                    ...p,
-                    id: p.id,
-                    name: p.name,
-                    category: p.category?.toLowerCase() || 'pantry',
-                    price: Number(p.price),
-                    stock: Number(p.total_stock) || 0,
-                    image: getProductImage(p.name, p.category),
-                    isNew: Math.random() > 0.7,
-                    isOnSale: !!p.is_on_sale,
-                    createdAt: new Date(Date.now() - Math.random() * 30 * 24 * 60 * 60 * 1000)
-                }));
+                const productsWithImages = data.map(p => {
+                    // Determine product image URL
+                    let imageUrl;
+                    if (p.image_url) {
+                        if (p.image_url.startsWith('http')) {
+                            imageUrl = p.image_url;
+                        } else {
+                            imageUrl = `http://localhost:5000${p.image_url}`;
+                        }
+                    } else {
+                        imageUrl = getProductImage(p.name, p.category);
+                    }
+                    
+                    return {
+                        ...p,
+                        id: p.id,
+                        name: p.name,
+                        category: p.category?.toLowerCase() || 'pantry',
+                        price: Number(p.price),
+                        stock: Number(p.total_stock) || 0,
+                        image: imageUrl,
+                        isNew: Math.random() > 0.7,
+                        isOnSale: !!p.is_on_sale,
+                        createdAt: new Date(Date.now() - Math.random() * 30 * 24 * 60 * 60 * 1000)
+                    };
+                });
                 setProducts(productsWithImages);
             } catch (err) {
                 console.error('Failed to load products', err);

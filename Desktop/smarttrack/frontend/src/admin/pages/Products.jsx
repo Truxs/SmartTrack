@@ -32,6 +32,12 @@ const getProductImage = (name = '', category = '') => {
   return 'https://images.unsplash.com/photo-1542838132-92c53300491e?auto=format&fit=crop&w=400&q=80';
 };
 
+const getProductImageUrl = (imageUrl, name, category) => {
+  if (!imageUrl) return getProductImage(name, category);
+  if (imageUrl.startsWith('http')) return imageUrl;
+  return `http://localhost:5000${imageUrl}`;
+};
+
 const Products = () => {
   const [products, setProducts] = useState([]);
   const [stock, setStock] = useState([]);
@@ -412,7 +418,7 @@ const Products = () => {
                 >
                   <div style={{ width: '100%', aspectRatio: '1/1', overflow: 'hidden', position: 'relative' }}>
                     <img
-                      src={p.image_url || getProductImage(p.name, p.category)}
+                      src={getProductImageUrl(p.image_url, p.name, p.category)}
                       alt={p.name}
                       style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }}
                       onError={(e) => {

@@ -1,6 +1,30 @@
 const express = require('express');
 const router = express.Router();
 const db = require('../config/db');
+const multer = require('multer');
+const path = require('path');
+
+// Configure multer for file uploads
+const storage = multer.diskStorage({
+    destination: (req, file, cb) => {
+        cb(null, path.join(__dirname, '../uploads'));
+    },
+    filename: (req, file, cb) => {
+        const uniqueName = `product-${Date.now()}-${Math.round(Math.random() * 1E9)}${path.extname(file.originalname)}`;
+        cb(null, uniqueName);
+    }
+});
+
+const upload = multer({
+    storage: storage,
+    fileFilter: (req, file, cb) => {
+        if (file.mimetype === 'image/png' || file.mimetype === 'image/jpeg' || file.mimetype === 'image/jpg') {
+            cb(null, true);
+        } else {
+            cb(new Error('Only PNG, JPG, JPEG files allowed!'), false);
+        }
+    }
+});
 
 // GET all products with total stock
 router.get('/', async (req, res) => {
@@ -37,7 +61,7 @@ router.get('/barcode/:barcode', async (req, res) => {
 });
 
 // POST create product
-router.post('/', async (req, res) => {
+router.post('/', upload.single('image_file'), async (req, res) => {
     try {
         const fields = [];
         const values = [];
@@ -45,9 +69,6 @@ router.post('/', async (req, res) => {
         
         // Handle both JSON and FormData
         let data = req.body;
-        if (req.is('multipart/form-data')) {
-            data = { ...req.body };
-        }
         
         if (data.barcode) { fields.push('barcode'); values.push(data.barcode); placeholders.push('?'); }
         if (data.name) { fields.push('name'); values.push(data.name); placeholders.push('?'); }
@@ -55,7 +76,11 @@ router.post('/', async (req, res) => {
         if (data.price) { fields.push('price'); values.push(parseFloat(data.price)); placeholders.push('?'); }
         if (data.reorder_level) { fields.push('reorder_level'); values.push(parseInt(data.reorder_level)); placeholders.push('?'); }
         if (data.is_on_sale !== undefined) { fields.push('is_on_sale'); values.push(data.is_on_sale ? 1 : 0); placeholders.push('?'); }
-        if (data.image_url) { fields.push('image_url'); values.push(data.image_url); placeholders.push('?'); }
+        if (req.file) { 
+            fields.push('image_url'); 
+            values.push(`/uploads/${req.file.filename}`); 
+            placeholders.push('?'); 
+        }
         
         if (fields.length === 0) {
             return res.status(400).json({ error: 'No data provided' });
@@ -65,23 +90,20 @@ router.post('/', async (req, res) => {
             `INSERT INTO products (${fields.join(', ')}) VALUES (${placeholders.join(', ')})`,
             values
         );
-        res.status(201).json({ id: result.insertId, ...data });
+        res.status(201).json({ id: result.insertId, ...data, image_url: req.file ? `/uploads/${req.file.filename}` : undefined });
     } catch (err) {
         res.status(500).json({ error: err.message });
     }
 });
 
 // PUT update product
-router.put('/:id', async (req, res) => {
+router.put('/:id', upload.single('image_file'), async (req, res) => {
     try {
         const fields = [];
         const values = [];
         
         // Handle both JSON and FormData
         let data = req.body;
-        if (req.is('multipart/form-data')) {
-            data = { ...req.body };
-        }
         
         if (data.barcode !== undefined) { fields.push('barcode = ?'); values.push(data.barcode); }
         if (data.name !== undefined) { fields.push('name = ?'); values.push(data.name); }
@@ -89,7 +111,10 @@ router.put('/:id', async (req, res) => {
         if (data.price !== undefined) { fields.push('price = ?'); values.push(parseFloat(data.price)); }
         if (data.reorder_level !== undefined) { fields.push('reorder_level = ?'); values.push(parseInt(data.reorder_level)); }
         if (data.is_on_sale !== undefined) { fields.push('is_on_sale = ?'); values.push(data.is_on_sale ? 1 : 0); }
-        if (data.image_url !== undefined) { fields.push('image_url = ?'); values.push(data.image_url); }
+        if (req.file) { 
+            fields.push('image_url = ?'); 
+            values.push(`/uploads/${req.file.filename}`); 
+        }
         
         if (fields.length === 0) {
             return res.status(400).json({ error: 'No fields to update' });
@@ -101,7 +126,7 @@ router.put('/:id', async (req, res) => {
             `UPDATE products SET ${fields.join(', ')} WHERE id=?`,
             values
         );
-        res.json({ message: 'Product updated' });
+        res.json({ message: 'Product updated', image_url: req.file ? `/uploads/${req.file.filename}` : undefined });
     } catch (err) {
         res.status(500).json({ error: err.message });
     }

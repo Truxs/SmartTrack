@@ -11,6 +11,39 @@ const StoreFront = () => {
     const [selectedProduct, setSelectedProduct] = useState(null);
     const [loading, setLoading] = useState(true);
 
+    const getProductImage = (name = '', category = '') => {
+        const n = name.toLowerCase();
+        const c = category.toLowerCase();
+        if (n.includes('tuna') || n.includes('sardine')) return 'https://images.unsplash.com/photo-1608685581781-a3b0e07dd224?auto=format&fit=crop&w=400&q=80';
+        if (n.includes('cheese')) return 'https://images.unsplash.com/photo-1486297678162-eb2a19b0a32d?auto=format&fit=crop&w=400&q=80';
+        if (n.includes('chicken')) return 'https://images.unsplash.com/photo-1604503468506-a8da13d11bea?auto=format&fit=crop&w=400&q=80';
+        if (n.includes('coca') || n.includes('cola')) return 'https://images.unsplash.com/photo-1554866585-cd94860890b7?auto=format&fit=crop&w=400&q=80';
+        if (n.includes('egg')) return 'https://images.unsplash.com/photo-1582722872445-44dc5f7e3c8f?auto=format&fit=crop&w=400&q=80';
+        if (n.includes('juice') || n.includes('orange')) return 'https://images.unsplash.com/photo-1621506289937-a8e4df240d0b?auto=format&fit=crop&w=400&q=80';
+        if (n.includes('chip') || n.includes('snack')) return 'https://images.unsplash.com/photo-1566478989037-eec170784d0b?auto=format&fit=crop&w=400&q=80';
+        if (n.includes('bread')) return 'https://images.unsplash.com/photo-1509440159596-0249088772ff?auto=format&fit=crop&w=400&q=80';
+        if (n.includes('milk')) return 'https://images.unsplash.com/photo-1563636619-e9143da7973b?auto=format&fit=crop&w=400&q=80';
+        if (n.includes('yogurt') || n.includes('yoghurt')) return 'https://images.unsplash.com/photo-1488477181946-6428a0291777?auto=format&fit=crop&w=400&q=80';
+        if (n.includes('rice')) return 'https://images.unsplash.com/photo-1536304929831-ee1ca9d44906?auto=format&fit=crop&w=400&q=80';
+        if (n.includes('water')) return 'https://images.unsplash.com/photo-1548839140-29a749e1cf4d?auto=format&fit=crop&w=400&q=80';
+        if (n.includes('coffee')) return 'https://images.unsplash.com/photo-1447933601403-0c6688de566e?auto=format&fit=crop&w=400&q=80';
+        if (n.includes('chocolate')) return 'https://images.unsplash.com/photo-1481391243133-f96216dcb5d2?auto=format&fit=crop&w=400&q=80';
+        if (n.includes('butter')) return 'https://images.unsplash.com/photo-1589985270826-4b7bb135bc9d?auto=format&fit=crop&w=400&q=80';
+        if (c.includes('dairy')) return 'https://images.unsplash.com/photo-1563636619-e9143da7973b?auto=format&fit=crop&w=400&q=80';
+        if (c.includes('meat')) return 'https://images.unsplash.com/photo-1604503468506-a8da13d11bea?auto=format&fit=crop&w=400&q=80';
+        if (c.includes('beverage') || c.includes('drink')) return 'https://images.unsplash.com/photo-1554866585-cd94860890b7?auto=format&fit=crop&w=400&q=80';
+        if (c.includes('bakery')) return 'https://images.unsplash.com/photo-1509440159596-0249088772ff?auto=format&fit=crop&w=400&q=80';
+        if (c.includes('snack')) return 'https://images.unsplash.com/photo-1566478989037-eec170784d0b?auto=format&fit=crop&w=400&q=80';
+        if (c.includes('canned')) return 'https://images.unsplash.com/photo-1608685581781-a3b0e07dd224?auto=format&fit=crop&w=400&q=80';
+        return 'https://images.unsplash.com/photo-1542838132-92c53300491e?auto=format&fit=crop&w=400&q=80';
+    };
+
+    const getProductImageUrl = (imageUrl, name, category) => {
+        if (!imageUrl) return getProductImage(name, category);
+        if (imageUrl.startsWith('http')) return imageUrl;
+        return `http://localhost:5000${imageUrl}`;
+    };
+
     useEffect(() => {
         fetchData();
         const interval = setInterval(fetchData, 60000);
@@ -133,20 +166,18 @@ const StoreFront = () => {
                                 cursor: 'pointer', transition: 'all 0.2s ease'
                             }}>
 
-                            {/*
-                                ===== PRODUCT IMAGE =====
-                                Replace this placeholder with:
-                                <img src={product.image_url} alt={product.name}
-                                     style={{ width:'100%', height:'180px', objectFit:'cover' }} />
-                                ==========================
-                            */}
+                            {/* Product Image */}
                             <div style={{
-                                width: '100%', height: '180px', background: 'var(--bg-input)',
-                                display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center',
-                                borderBottom: '1px solid var(--border-light)', color: '#cbd5e1', position: 'relative'
+                                width: '100%', height: '180px', overflow: 'hidden', position: 'relative'
                             }}>
-                                <ImageIcon size={40} strokeWidth={1.5} />
-                                <span style={{ fontSize: '11px', marginTop: '6px' }}>No image</span>
+                                <img
+                                    src={getProductImageUrl(product.image_url, product.name, product.category)}
+                                    alt={product.name}
+                                    style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }}
+                                    onError={(e) => {
+                                        e.target.src = getProductImage(product.name, product.category);
+                                    }}
+                                />
 
                                 {/* Status Badge */}
                                 <span style={{
@@ -228,16 +259,18 @@ const StoreFront = () => {
                         border: '1px solid var(--border)', width: '100%', maxWidth: '440px',
                         boxShadow: 'var(--shadow-xl)', overflow: 'hidden'
                     }}>
-                        {/*
-                            ===== PRODUCT IMAGE =====
-                            Replace this with an <img> tag for the product.
-                            ==========================
-                        */}
+                        {/* Product Image */}
                         <div style={{
-                            width: '100%', height: '200px', background: 'var(--bg-input)',
-                            display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#cbd5e1'
+                            width: '100%', height: '200px', overflow: 'hidden'
                         }}>
-                            <ImageIcon size={48} strokeWidth={1.5} />
+                            <img
+                                src={getProductImageUrl(selectedProduct.image_url, selectedProduct.name, selectedProduct.category)}
+                                alt={selectedProduct.name}
+                                style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+                                onError={(e) => {
+                                    e.target.src = getProductImage(selectedProduct.name, selectedProduct.category);
+                                }}
+                            />
                         </div>
 
                         <div style={{ padding: '24px' }}>
