@@ -157,14 +157,14 @@ const FilterModal = ({ isOpen, onClose, categories, selectedCategories, onToggle
                 </div>
                 <div style={{ padding: '16px 24px', overflowY: 'auto', maxHeight: '60vh' }}>
                     {categories.map(cat => (
-                        <label key={cat} style={{ display: 'flex', alignItems: 'center', gap: '12px', padding: '12px 0', cursor: 'pointer', borderBottom: '1px solid var(--border-light)' }}>
+                        <label key={cat.id} style={{ display: 'flex', alignItems: 'center', gap: '12px', padding: '12px 0', cursor: 'pointer', borderBottom: '1px solid var(--border-light)' }}>
                             <input 
                                 type="checkbox" 
-                                checked={selectedCategories.includes(cat)} 
-                                onChange={() => onToggleCategory(cat)}
+                                checked={selectedCategories.includes(cat.id)} 
+                                onChange={() => onToggleCategory(cat.id)}
                                 style={{ width: '18px', height: '18px', cursor: 'pointer' }}
                             />
-                            <span style={{ fontSize: '14px', color: 'var(--text-primary)' }}>{cat}</span>
+                            <span style={{ fontSize: '14px', color: 'var(--text-primary)' }}>{cat.name}</span>
                         </label>
                     ))}
                 </div>
@@ -286,23 +286,22 @@ const UserDashboardWrapper = () => {
     const productCategories = [...new Set(products.map(p => p.category))];
 
     let filteredProducts = products.filter(p => {
-        let matchesCategory = selectedCategory === 'only-sm' || p.category === selectedCategory;
-        if (selectedCategory === 'only-sm') {
-            matchesCategory = true;
-        } else if (selectedCategory === 'chilled-dairy' && p.category === 'dairy') {
-            matchesCategory = true;
-        } else if (selectedCategory === 'fresh-meat' && p.category === 'meat') {
-            matchesCategory = true;
-        } else if (selectedCategory === 'fresh-produce' && p.category === 'produce') {
-            matchesCategory = true;
-        } else if (selectedCategory === 'complete-home' && p.category === 'home-care') {
-            matchesCategory = true;
-        } else if (selectedCategory === 'health-hygiene' && p.category === 'health-beauty') {
-            matchesCategory = true;
-        }
+        // Function to check if a product matches a filter category
+        const matchesFilterCategory = (filterCat) => {
+            if (p.category === filterCat) return true;
+            // Check for category mappings
+            if (filterCat === 'chilled-dairy' && p.category === 'dairy') return true;
+            if (filterCat === 'fresh-meat' && p.category === 'meat') return true;
+            if (filterCat === 'fresh-produce' && p.category === 'produce') return true;
+            if (filterCat === 'complete-home' && p.category === 'home-care') return true;
+            if (filterCat === 'health-hygiene' && p.category === 'health-beauty') return true;
+            return false;
+        };
+
+        let matchesCategory = selectedCategory === 'only-sm' || matchesFilterCategory(selectedCategory);
         
         if (selectedFilterCategories.length > 0) {
-            matchesCategory = matchesCategory && selectedFilterCategories.includes(p.category);
+            matchesCategory = matchesCategory && selectedFilterCategories.some(filterCat => matchesFilterCategory(filterCat));
         }
 
         const matchesSearch = p.name.toLowerCase().includes(search.toLowerCase());
@@ -760,7 +759,7 @@ const UserDashboardWrapper = () => {
             <FilterModal
                 isOpen={isFilterModalOpen}
                 onClose={() => setIsFilterModalOpen(false)}
-                categories={productCategories}
+                categories={CATEGORIES.filter(c => c.id !== 'only-sm')} // exclude 'Only SmartTrack category
                 selectedCategories={selectedFilterCategories}
                 onToggleCategory={toggleFilterCategory}
             />
