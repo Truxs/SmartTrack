@@ -1,9 +1,11 @@
 const express = require('express');
 const router = express.Router();
 const jwt = require('jsonwebtoken');
+const bcrypt = require('bcryptjs');
 const db = require('../config/db');
 
-const JWT_SECRET = 'your-secret-key-change-in-production';
+const JWT_SECRET = process.env.JWT_SECRET || 'your-secret-key-change-in-production';
+const SALT_ROUNDS = 10;
 
 // Login route
 router.post('/login', async (req, res) => {
@@ -18,8 +20,9 @@ router.post('/login', async (req, res) => {
         if (users.length === 0) return res.status(401).json({ error: 'Invalid email or password' });
         
         const user = users[0];
-        // Compare password against stored password
-        if (password !== user.password) {
+        // Compare password against hashed password
+        const passwordMatch = await bcrypt.compare(password, user.password);
+        if (!passwordMatch) {
             return res.status(401).json({ error: 'Invalid email or password' });
         }
         
@@ -48,10 +51,13 @@ router.post('/register', async (req, res) => {
         // Generate username from email
         const username = email.split('@')[0];
         
+        // Hash the password
+        const hashedPassword = await bcrypt.hash(password, SALT_ROUNDS);
+        
         // Insert new user
         const [result] = await db.query(
             'INSERT INTO users (username, email, password, role) VALUES (?, ?, ?, ?)', 
-            [username, email, password, 'user']
+            [username, email, hashedPassword, 'user']
         );
         
         // Generate token for new user
